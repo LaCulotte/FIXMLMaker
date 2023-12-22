@@ -7,6 +7,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
+import { FIXTree } from "./fixClass/FIXTree.js";
+var parser = new DOMParser();
 export function loadXmlInput() {
     return __awaiter(this, void 0, void 0, function* () {
         let elem = document.getElementById("xml-input");
@@ -22,7 +24,19 @@ export function loadRemoteXmlFile(path) {
         return fetch(path)
             .then((res) => {
             return res.text();
+        })
+            .then((resText) => {
+            return loadFIXTree(resText);
+        })
+            .catch((reason) => {
+            throw `Cannot parse FIXML file ${path} : ${reason}`;
         });
+    });
+}
+export function loadFIXTree(xmlString) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let document = parser.parseFromString(xmlString, "text/xml");
+        return new FIXTree(document);
     });
 }
 //# sourceMappingURL=XmlLoader.js.map

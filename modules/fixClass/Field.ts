@@ -1,9 +1,10 @@
 import { elemToMinimalStr } from "../XmlHelper.js";
 
 /**
- * Represents a field in a FIXML message.
+ * Represents a field's enum in a FIXML message.
  */
 type FieldEnumValue = { enum: string; description: string; uncommon: boolean };
+
 
 export class Field {
     // The name of the field.
@@ -51,8 +52,6 @@ export class Field {
 
         if (!this._name)
             throw new Error(`Invalid FIXML: missing attribute 'name' in ${elemToMinimalStr(fieldElement)}`);
-        if (!this._number)
-            throw new Error(`Invalid FIXML: missing attribute 'number' in ${elemToMinimalStr(fieldElement)}`);
         if (!this._type)
             throw new Error(`Invalid FIXML: missing attribute 'type' in ${elemToMinimalStr(fieldElement)}`);
 
