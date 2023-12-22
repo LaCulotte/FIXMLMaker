@@ -14,7 +14,10 @@ function load()
 function init()
 {
     loadRemoteXmlFile("FIXML_templates/FIXT11.xml").then((res) => {
-        FIXT11 = res;
+        // FIXT11 = res;
+        console.log(res);
+        // @ts-ignore
+        window.xmldoc = res;
     });
 }
 
