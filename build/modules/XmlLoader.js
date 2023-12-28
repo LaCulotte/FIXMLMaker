@@ -7,7 +7,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-import { FIXTree } from "./fixClass/FIXTree.js";
 var parser = new DOMParser();
 export function loadXmlInput() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -16,7 +15,13 @@ export function loadXmlInput() {
         if (!file) {
             throw undefined;
         }
-        return file.text();
+        return file.text()
+            .then((resText) => {
+            return loadFIXTree(resText);
+        })
+            .catch((reason) => {
+            throw `Cannot parse FIXML file ${file.name} : ${reason}`;
+        });
     });
 }
 export function loadRemoteXmlFile(path) {
@@ -36,7 +41,8 @@ export function loadRemoteXmlFile(path) {
 export function loadFIXTree(xmlString) {
     return __awaiter(this, void 0, void 0, function* () {
         let document = parser.parseFromString(xmlString, "text/xml");
-        return new FIXTree(document);
+        yield window.fixTree.parse(document);
+        return window.fixTree;
     });
 }
 //# sourceMappingURL=XmlLoader.js.map
