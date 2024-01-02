@@ -11,6 +11,7 @@ import { getFirstChildByTagName, elemToMinimalStr } from "../XmlHelper.js";
 import { BaseGroup, Message, Component } from "./Group.js";
 import { Field } from "./Field.js";
 import { ParsingConfig } from "./FIXElem.js";
+import { reactive } from 'vue';
 export class BeingParsedError extends Error {
 }
 /**
@@ -31,8 +32,8 @@ export class FIXTree {
         this._fieldsMap = new Map();
         this._messagesMap = new Map();
         this._componentsMap = new Map();
-        this._header = new BaseGroup();
-        this._trailer = new BaseGroup();
+        this._header = new BaseGroup(this);
+        this._trailer = new BaseGroup(this);
         this._fieldsParsingErrors = new Map();
         this._messagesParsingErrors = new Map();
         this._componentsParsingErrors = new Map();
@@ -81,7 +82,7 @@ export class FIXTree {
             if (fieldElem === undefined)
                 return;
             for (let child of fieldElem.children) {
-                let field = new Field();
+                let field = reactive(new Field(this));
                 if (yield field.parse(child, parsingConfig))
                     this._fieldsMap.set(field.name, field);
                 else
@@ -100,7 +101,7 @@ export class FIXTree {
             if (messagesElem === undefined)
                 return;
             for (let child of messagesElem.children) {
-                let message = new Message();
+                let message = reactive(new Message(this));
                 if (yield message.parse(child, parsingConfig))
                     this._messagesMap.set(message.name, message);
                 else
@@ -118,13 +119,16 @@ export class FIXTree {
             let componentsElem = getFirstChildByTagName(fixElem, "components");
             if (componentsElem === undefined)
                 return;
+            let additionalComponents = new Map();
             for (let child of componentsElem.children) {
-                let component = new Component();
+                let component = reactive(new Component(this));
                 if (yield component.parse(child, parsingConfig))
-                    this._componentsMap.set(component.name, component);
+                    additionalComponents.set(component.name, component);
                 else
                     this._componentsParsingErrors.set(`Invalid component ${elemToMinimalStr(child)} in ${elemToMinimalStr(componentsElem)}`, component._parsingErrors);
             }
+            // Made this way to avoid too many updates on componentsMap
+            this._componentsMap = new Map([...this._componentsMap, ...additionalComponents]);
         });
     }
     /**
@@ -174,4 +178,18 @@ export class FIXTree {
         return new XMLSerializer().serializeToString(document);
     }
 }
+export const FixTreeVue = {
+    props: {
+        fixTree: FIXTree
+    },
+    setup(props) {
+        // props.fixTree
+        console.log("slkdjqs");
+        console.log(props.fixTree);
+        console.log("slkdjqs");
+    },
+    template: ` 
+        <h1>FIXTree</h1>
+    `
+};
 //# sourceMappingURL=FIXTree.js.map

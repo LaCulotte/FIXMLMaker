@@ -15,8 +15,8 @@ export class Field extends FIXElem {
      * @param fieldElement The XML element representing the field.
      * @throws Throws an error if the field element is invalid.
      */
-    constructor(name, number, type, values, uncommon) {
-        super();
+    constructor(fixTree, name, number, type, values, uncommon) {
+        super(fixTree);
         this._name = name;
         this._number = number;
         this.type = type;
@@ -119,65 +119,80 @@ export class Field extends FIXElem {
         return fieldElement;
     }
 }
-export class Reference extends FIXElem {
-    constructor(tagName, name, required, uncommon) {
-        super();
-        this._tagName = tagName;
-        this._name = name;
-        this._required = required;
-        this._uncommon = uncommon;
-    }
-    parse(referenceElement, parsingConfig) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let parsingOk = true;
-            this._tagName = referenceElement.tagName;
-            this._name = referenceElement.getAttribute("name");
-            const requiredAttribute = referenceElement.getAttribute("required");
-            this._required = requiredAttribute !== null ? requiredAttribute === "Y" : null;
-            this._uncommon = referenceElement.hasAttribute("uncommon");
-            if (this._tagName !== "component" && this._tagName !== "field") {
-                parsingOk = false;
-                this._parsingErrors.set(`Invalid field: invalid tag name '${this._tagName}' in ${elemToMinimalStr(referenceElement)} Must be 'component' or 'field'`, undefined);
-            }
-            if (this._name === null) {
-                parsingOk = false;
-                this._parsingErrors.set(`Invalid field: missing attribute 'name' in ${elemToMinimalStr(referenceElement)}`, undefined);
-            }
-            if (this._required === null) {
-                this._required = false;
-                this._parsingErrors.set(`Invalid field: missing attribute 'required' in ${elemToMinimalStr(referenceElement)}`, undefined);
-            }
-            this._parsed = true;
-            return parsingOk;
-        });
-    }
-    get tagName() {
-        return this._tagName;
-    }
-    get name() {
-        return this._name;
-    }
-    get required() {
-        return this._required;
-    }
-    get uncommon() {
-        return this._uncommon;
-    }
-    /**
-     * Serializes the reference to an XML document.
-     * @param document The XML document to serialize to.
-     * @param parentNode The parent node to append the serialized reference to.
-     */
-    serialize(document, parentNode, metadata) {
-        const referenceElement = document.createElement(this._tagName);
-        referenceElement.setAttribute("name", this._name);
-        referenceElement.setAttribute("required", this._required ? "Y" : "N");
-        if (metadata && this._uncommon)
-            referenceElement.setAttribute("uncommon", "true");
-        parentNode.appendChild(referenceElement);
-        return referenceElement;
-    }
-}
+export const FieldVue = {
+    props: {
+        field: Field,
+    },
+    setup(props) {
+        return {
+            field: props.field
+        };
+    },
+    template: `
+        <div>field : {{ field.name }}</div>
+        `,
+};
+// export class Reference extends FIXElem {
+//     private _tagName: string;
+//     private _name: string;
+//     private _required: boolean;
+//     private _uncommon: boolean;
+//     constructor(tagName?: string, name?: string, required?: boolean, uncommon?: boolean ) {
+//         super();
+//         this._tagName = tagName;
+//         this._name = name;
+//         this._required = required;
+//         this._uncommon = uncommon;
+//     }
+//     async parse(referenceElement: Element, parsingConfig: ParsingConfig): Promise<boolean> {
+//         let parsingOk = true;
+//         this._tagName = referenceElement.tagName;
+//         this._name = referenceElement.getAttribute("name");
+//         const requiredAttribute = referenceElement.getAttribute("required");
+//         this._required = requiredAttribute !== null ? requiredAttribute === "Y" : null;
+//         this._uncommon = referenceElement.hasAttribute("uncommon");
+//         if (this._tagName !== "component" && this._tagName !== "field") {
+//             parsingOk = false;
+//             this._parsingErrors.set(`Invalid field: invalid tag name '${this._tagName}' in ${elemToMinimalStr(referenceElement)} Must be 'component' or 'field'`, undefined);
+//         }
+//         if (this._name === null) {
+//             parsingOk = false;
+//             this._parsingErrors.set(`Invalid field: missing attribute 'name' in ${elemToMinimalStr(referenceElement)}`, undefined);
+//         }
+//         if (this._required === null) {
+//             this._required = false;
+//             this._parsingErrors.set(`Invalid field: missing attribute 'required' in ${elemToMinimalStr(referenceElement)}`, undefined);
+//         }
+//         this._parsed = true;
+//         return parsingOk;
+//     }
+//     get tagName(): string {
+//         return this._tagName;
+//     }
+//     get name(): string {
+//         return this._name;
+//     }
+//     get required(): boolean {
+//         return this._required;
+//     }
+//     get uncommon(): boolean {
+//         return this._uncommon;
+//     }
+//     /**
+//      * Serializes the reference to an XML document.
+//      * @param document The XML document to serialize to.
+//      * @param parentNode The parent node to append the serialized reference to.
+//      */
+//     serialize(document: Document, parentNode: Element, metadata: boolean): Element {
+//         const referenceElement = document.createElement(this._tagName);
+//         referenceElement.setAttribute("name", this._name);
+//         referenceElement.setAttribute("required", this._required ? "Y" : "N");
+//         if (metadata && this._uncommon)
+//             referenceElement.setAttribute("uncommon", "true");
+//         parentNode.appendChild(referenceElement);
+//         return referenceElement;
+//     }
+// }
 export class FieldTypeSingleton {
     constructor() {
         this.types = new Map();

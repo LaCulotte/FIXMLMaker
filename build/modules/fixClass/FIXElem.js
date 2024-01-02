@@ -12,18 +12,16 @@ export class ParsingConfig {
         this.lenient = false;
     }
 }
+;
+;
+;
+;
 export class FIXElem {
-    constructor() {
+    constructor(fixTree) {
         this._parsingErrors = new Map();
         this._parsed = false;
-        // /**
-        //  * Adds a parsing error to the member array based on the lenient boolean in parsingConfig.
-        //  * @param error The error message to add.
-        //  * @param parsingConfig The parsing configuration.
-        //  */
-        // addParsingError(error: string, parsingConfig: ParsingConfig): void {
-        //     this._parsingErrors.push(error);
-        // }
+        this.used = false;
+        this.fixTree = fixTree;
     }
     parse(elem, parsingConfig) {
         return __awaiter(this, void 0, void 0, function* () {
