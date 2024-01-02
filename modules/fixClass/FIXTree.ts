@@ -1,16 +1,16 @@
 import { getFirstChildByTagName, elemToMinimalStr } from "../XmlHelper.js";
-import { BaseGroup, Message, Component, Group } from "./Group.js";
+import { BaseGroup, Message, Component } from "./Group.js";
 import { Field } from "./Field.js";
-import { ParsingConfig, FIXElem, ParsingError } from "./FIXElem.js";
+import { ParsingConfig, FIXElem, ParsingError, IFIXTree } from "./FIXElem.js";
 
-import { ref, Ref, reactive } from 'vue';
+import { reactive } from 'vue';
 
 export class BeingParsedError extends Error {}
 
 /**
  * Represents a FIXTree object that handles FIXML documents.
  */
-export class FIXTree {
+export class FIXTree implements IFIXTree {
     _parsed = false;
     _alreadyParsed = false;
 
@@ -28,8 +28,8 @@ export class FIXTree {
     _fieldsMap: Map<string, Field> = new Map<string, Field>();
     _messagesMap: Map<string, Message> = new Map<string, Message>();
     _componentsMap: Map<string, Component> = new Map<string, Component>();
-    _header: BaseGroup = new BaseGroup();
-    _trailer: BaseGroup = new BaseGroup();
+    _header: BaseGroup = new BaseGroup(this);
+    _trailer: BaseGroup = new BaseGroup(this);
 
     _fieldsParsingErrors: ParsingError = new Map<string, ParsingError>();
     _messagesParsingErrors: ParsingError = new Map<string, ParsingError>();
@@ -46,7 +46,7 @@ export class FIXTree {
         this._servicepack = servicepack;
         this._type = type;
     }
-    
+
     async parse(fixmlDocument: Document, parsingConfig: ParsingConfig = new ParsingConfig()): Promise<FIXTree> {
         if (this._alreadyParsed && !this._parsed)
             throw new BeingParsedError("FIXTree is already being parsed.");
@@ -91,7 +91,7 @@ export class FIXTree {
             return;
 
         for (let child of fieldElem.children) {
-            let field = new Field();
+            let field = reactive(new Field(this)) as Field;
             if (await field.parse(child, parsingConfig))
                 this._fieldsMap.set(field.name, field);
             else 
@@ -110,7 +110,7 @@ export class FIXTree {
             return;
 
         for (let child of messagesElem.children) {
-            let message = new Message();
+            let message = reactive(new Message(this)) as Message;
             if(await message.parse(child, parsingConfig))
                 this._messagesMap.set(message.name, message);
             else
@@ -128,13 +128,17 @@ export class FIXTree {
         if (componentsElem === undefined)
             return;
 
+        let additionalComponents = new Map<string, Component>();
         for (let child of componentsElem.children) {
-            let component = new Component();
+            let component = reactive(new Component(this)) as Component;
             if (await component.parse(child, parsingConfig))
-                this._componentsMap.set(component.name, component);
+                additionalComponents.set(component.name, component);
             else
                 this._componentsParsingErrors.set(`Invalid component ${elemToMinimalStr(child)} in ${elemToMinimalStr(componentsElem)}`, component._parsingErrors);
         }
+
+        // Made this way to avoid too many updates on componentsMap
+        this._componentsMap = new Map([...this._componentsMap, ...additionalComponents]);
     }
 
     /**
@@ -190,4 +194,23 @@ export class FIXTree {
 
         return new XMLSerializer().serializeToString(document);
     }
+}
+
+type FixTreeVueProps = {
+    fixTree: FIXTree
+}
+
+export const FixTreeVue = {
+    props: {
+        fixTree: FIXTree
+    },
+    setup(props: FixTreeVueProps) {
+        // props.fixTree
+        console.log("slkdjqs")
+        console.log(props.fixTree);
+        console.log("slkdjqs")
+    },
+    template: ` 
+        <h1>FIXTree</h1>
+    `
 }

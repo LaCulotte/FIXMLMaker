@@ -1,9 +1,9 @@
 <fix type='FIXT' major='1' minor='1' servicepack='0'>
     <header>
-        <field name='BeginString' />
-        <field required='Y' />
-        <salut name='MsgType' required='Y' />
-        <aa />
+        <field name='BeginString' required='Y' />
+        <field name='BodyLength' required='Y' />
+        <field name='MsgType' required='Y' />
+        <field name='ApplVerID' required='N' />
         <field name='ApplExtID' required='N' />
         <field name='CstmApplVerID' required='N' />
         <field name='SenderCompID' required='Y' />
@@ -29,9 +29,9 @@
         <field name='XmlData' required='N' />
         <field name='MessageEncoding' required='N' />
         <field name='LastMsgSeqNumProcessed' required='N' />
-        <group  required='N'>
-            <field name='HopCompID' />
-            <field required='N' />
+        <group name='NoHops' required='N'>
+            <field name='HopCompID' required='N' />
+            <field name='HopSendingTime' required='N' />
             <field name='HopRefID' required='N' />
         </group>
     </header>
@@ -102,14 +102,41 @@
         <field name='CheckSum' required='Y' />
     </trailer>
     <components>
-        <component name='HopGrp'>
+        <!-- <component name='HopGrp'>
             <group name='NoHops' required='N'>
                 <field name='HopCompID' required='N' />
                 <field name='HopSendingTime' required='N' />
                 <field name='HopRefID' required='N' />
             </group>
         </component>
-        <component name='MsgTypeGrp' />
+        <component name='MsgTypeGrp' /> -->
+        <component name='HopGrp'>
+            <field name='HopCompID' required='N' />
+            <field name='HopSendingTime' required='N' />
+            <field name='HopRefID' required='N' />
+        </component>
+        <component name='HopGrp2'>
+            <field name='HopCompID' required='N' />
+            <field name='HopSendingTime' required='N' />
+            <field name='HopRefID' required='N' />
+        </component>
+        <component name='HopGrp3'>
+            <field name='HopCompID' required='N' />
+            <field name='HopSendingTime' required='N' />
+            <field name='HopRefIDa' required='N' />
+            <field name='HopRefIDz' required='N' />
+            <field name='HopRefIDe' required='N' />
+            <field name='HopRefIDr' required='N' />
+            <field name='HopRefIDt' required='N' />
+            <field name='HopRefIDt' required='N' />
+            <field name='HopRefIDy' required='N' />
+            <field name='HopRefIDu' required='N' />
+            <field name='HopRefIDi' required='N' />
+            <field name='HopRefIDo' required='N' />
+            <field name='HopRefIDp' required='N' />
+            <field name='HopRefIDq' required='N' />
+            <field name='HopRefIDs' required='N' />
+        </component>
     </components>
     <fields>
         <field number='7' name='BeginSeqNo' type='SEQNUM' />

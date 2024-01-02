@@ -1,0 +1,6 @@
+# npm
+node_modules
+package-lock.json
+
+# Heavy FIX template
+FIXML_templates/FIX50.xml

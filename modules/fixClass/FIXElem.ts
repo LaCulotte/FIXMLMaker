@@ -4,10 +4,31 @@ export class ParsingConfig {
 
 export type ParsingError = Map<string, ParsingError>;
 
+declare class Field extends FIXElem {};
+declare class Message extends FIXElem {};
+declare class Component extends FIXElem {};
+declare class BaseGroup extends FIXElem {};
+
+export interface IFIXTree {
+    _fieldsMap: Map<string, Field>;
+    _messagesMap: Map<string, Message>;
+    _componentsMap: Map<string, Component>;
+    _header: BaseGroup;
+    _trailer: BaseGroup;
+}
+
 export class FIXElem {
+    fixTree: IFIXTree;
+
     _parsingErrors: ParsingError = new Map<string, ParsingError>();
 
     _parsed: boolean = false;
+
+    used: boolean = false;
+
+    constructor(fixTree: IFIXTree) {
+        this.fixTree = fixTree;
+    }
 
     async parse(elem: Element, parsingConfig: ParsingConfig): Promise<boolean> {
         throw new Error("Method parse not implemented. FIXElem was not meant to be instantiated.");

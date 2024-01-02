@@ -1,0 +1,47 @@
+.flex-contain {
+    min-height: 0;
+}
+
+.flex-contain52 {
+    min-height: 52px;
+}
+
+.gutter {
+    background-color: #eee;
+    background-repeat: no-repeat;
+    background-position: 50%;
+}
+
+.gutter.gutter-horizontal {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUAAAAeCAYAAADkftS9AAAAIklEQVQoU2M4c+bMfxAGAgYYmwGrIIiDjrELjpo5aiZeMwF+yNnOs5KSvgAAAABJRU5ErkJggg==');
+    cursor: col-resize;
+}
+
+.gutter.gutter-vertical {
+    background-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAB4AAAAFAQMAAABo7865AAAABlBMVEVHcEzMzMzyAv2sAAAAAXRSTlMAQObYZgAAABBJREFUeF5jOAMEEAIEEFwAn3kMwcB6I2AAAAAASUVORK5CYII=');
+    cursor: row-resize;
+}
+
+.fix-accordion {
+    --bs-accordion-btn-padding-y: 0.4rem;
+    --bs-accordion-btn-padding-x: 0.4rem;
+
+    max-height: 100%;
+}
+
+/* .accordion-item {
+    max-height: 20rem;
+}
+
+.accordion-collapse {
+    max-height: 300px;
+} */
+
+.accordion-body {
+    max-height: 15rem;
+}
+
+
+/* .accordion-header {
+    min-height: auto;
+} */
