@@ -23,10 +23,11 @@
             }
             }
         </script> -->
-        <script src="https://unpkg.com/split.js/dist/split.min.js"></script>
+        <script src="https://unpkg.com/split.js/dist/split.min.js">
+            window.Split=Split;
+        </script>
         <script>
             // Split(["#main-accordion", "#other"]);
-            window.Split=Split;
         </script>
         <script type="module" src="./build/index.js"></script>
     </head>
