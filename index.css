@@ -29,6 +29,13 @@
     max-height: 100%;
 }
 
+.fake-accordion-button {
+    padding: 0.4rem;
+    border: 1px solid #fff;
+    border-radius: 0.25rem;
+    background-color: #fff;
+}
+
 /* .accordion-item {
     max-height: 20rem;
 }
@@ -45,3 +52,5 @@
 /* .accordion-header {
     min-height: auto;
 } */
+
+*[style*="display: none"] { display: none !important }

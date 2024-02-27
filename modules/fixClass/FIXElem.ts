@@ -30,7 +30,7 @@ export class FIXElem {
         this.fixTree = fixTree;
     }
 
-    async parse(elem: Element, parsingConfig: ParsingConfig): Promise<boolean> {
+    parse(elem: Element, parsingConfig: ParsingConfig): boolean {
         throw new Error("Method parse not implemented. FIXElem was not meant to be instantiated.");
     }
 

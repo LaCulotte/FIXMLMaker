@@ -47,7 +47,7 @@ export class FIXTree implements IFIXTree {
         this._type = type;
     }
 
-    async parse(fixmlDocument: Document, parsingConfig: ParsingConfig = new ParsingConfig()): Promise<FIXTree> {
+    parse(fixmlDocument: Document, parsingConfig: ParsingConfig = new ParsingConfig()): FIXTree {
         if (this._alreadyParsed && !this._parsed)
             throw new BeingParsedError("FIXTree is already being parsed.");
 
@@ -69,10 +69,10 @@ export class FIXTree implements IFIXTree {
             this._major = fixElem.getAttribute("major");
 
             this._alreadyParsed = true;
-            await this.loadFields(fixElem, parsingConfig);
-            await this.loadMessages(fixElem, parsingConfig);
-            await this.loadComponents(fixElem, parsingConfig);
-            await this.loadHeaderAndTrailer(fixElem, parsingConfig);
+            this.loadFields(fixElem, parsingConfig);
+            this.loadMessages(fixElem, parsingConfig);
+            this.loadComponents(fixElem, parsingConfig);
+            this.loadHeaderAndTrailer(fixElem, parsingConfig);
 
             return this;
         } finally {
@@ -85,18 +85,22 @@ export class FIXTree implements IFIXTree {
      * 
      * @param fixElem - The FIXML element to load fields from.
      */
-    async loadFields(fixElem: Element, parsingConfig: ParsingConfig) {
+    loadFields(fixElem: Element, parsingConfig: ParsingConfig) {
         let fieldElem = getFirstChildByTagName(fixElem, "fields");
         if (fieldElem === undefined)
             return;
 
+        let additionalFields = new Map<string, Field>();
         for (let child of fieldElem.children) {
             let field = reactive(new Field(this)) as Field;
-            if (await field.parse(child, parsingConfig))
-                this._fieldsMap.set(field.name, field);
+            if (field.parse(child, parsingConfig))
+                additionalFields.set(field.name, field);
             else 
                 this._fieldsParsingErrors.set(`Invalid field ${elemToMinimalStr(child)} in ${elemToMinimalStr(fieldElem)}`, field._parsingErrors);
         }
+
+        // Made this way to avoid too many updates on fieldsMap
+        this._fieldsMap = new Map([...this._fieldsMap, ...additionalFields]);
     }
 
     /**
@@ -104,18 +108,22 @@ export class FIXTree implements IFIXTree {
      * 
      * @param fixElem - The FIXML element to load messages from.
      */
-    async loadMessages(fixElem: Element, parsingConfig: ParsingConfig) {
+    loadMessages(fixElem: Element, parsingConfig: ParsingConfig) {
         let messagesElem = getFirstChildByTagName(fixElem, "messages");
         if (messagesElem === undefined)
             return;
 
+        let additionalMessages = new Map<string, Message>();
         for (let child of messagesElem.children) {
             let message = reactive(new Message(this)) as Message;
-            if(await message.parse(child, parsingConfig))
-                this._messagesMap.set(message.name, message);
+            if (message.parse(child, parsingConfig))
+                additionalMessages.set(message.name, message);
             else
                 this._messagesParsingErrors.set(`Invalid message ${elemToMinimalStr(child)} in ${elemToMinimalStr(messagesElem)}`, message._parsingErrors);
         }
+
+        // Made this way to avoid too many updates on messagesMap
+        this._messagesMap = new Map([...this._messagesMap, ...additionalMessages]);
     }
 
     /**
@@ -123,7 +131,7 @@ export class FIXTree implements IFIXTree {
      * 
      * @param fixElem - The FIXML element to load components from.
      */
-    async loadComponents(fixElem: Element, parsingConfig: ParsingConfig) {
+    loadComponents(fixElem: Element, parsingConfig: ParsingConfig) {
         let componentsElem = getFirstChildByTagName(fixElem, "components");
         if (componentsElem === undefined)
             return;
@@ -131,7 +139,7 @@ export class FIXTree implements IFIXTree {
         let additionalComponents = new Map<string, Component>();
         for (let child of componentsElem.children) {
             let component = reactive(new Component(this)) as Component;
-            if (await component.parse(child, parsingConfig))
+            if (component.parse(child, parsingConfig))
                 additionalComponents.set(component.name, component);
             else
                 this._componentsParsingErrors.set(`Invalid component ${elemToMinimalStr(child)} in ${elemToMinimalStr(componentsElem)}`, component._parsingErrors);
@@ -146,14 +154,14 @@ export class FIXTree implements IFIXTree {
      * 
      * @param fixElem - The FIXML element to load the header and trailer from.
      */
-    async loadHeaderAndTrailer(fixElem: Element, parsingConfig: ParsingConfig) {
+    loadHeaderAndTrailer(fixElem: Element, parsingConfig: ParsingConfig) {
         let headerElem = getFirstChildByTagName(fixElem, "header");
         if (headerElem !== undefined)
-            await this._header.parse(headerElem, parsingConfig);
+            this._header.parse(headerElem, parsingConfig);
 
         let trailerElem = getFirstChildByTagName(fixElem, "trailer");
         if (trailerElem !== undefined)
-            await this._trailer.parse(trailerElem, parsingConfig);
+            this._trailer.parse(trailerElem, parsingConfig);
     }
 
     /**

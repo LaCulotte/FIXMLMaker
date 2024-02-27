@@ -1,25 +1,120 @@
 import { elemToMinimalStr } from "../XmlHelper.js";
 import { ParsingConfig, FIXElem, ParsingError, IFIXTree } from "./FIXElem.js";
+import { InputVue, AccordionVue, FilterVue } from "../Utils.js";
 
-import { ref } from 'vue';
+import { ref, computed, reactive } from 'vue';
 
 /**
  * Represents a field's enum in a FIXML message.
  */
-type FieldEnumValue = { enum: string; description: string; uncommon: boolean };
+type FieldEnumValue = { parent: Field, enum: string; description: string; uncommon: boolean, parsed: boolean };
 
+export const FieldEnumValueVue = {
+    props: {
+        fieldEnumValue: Object,
+    },
+    components: {
+        InputVue,
+    },
+    setup(props) {
+        const fieldEnumValue = props.fieldEnumValue;
+
+        const textInputEnum = ref(fieldEnumValue.enum);
+        const textInputEnumStruct = {
+            input: textInputEnum,
+            isValid: (textInput) => {
+                return textInput.length > 0;
+            },
+            placeholder: "fieldEnumValue enum",
+            focusOnCreate: !fieldEnumValue.parsed
+        };
+
+        const onEnumFocusOut = () => {
+            if (fieldEnumValue.enum == textInputEnum.value)
+                return;
+
+            if (textInputEnumStruct.isValid(textInputEnum.value)) {
+                let newMap = new Map<string, FieldEnumValue>();
+                for (let [key, value] of fieldEnumValue.parent.values) {
+                    if (key == fieldEnumValue.enum)
+                        newMap.set(textInputEnum.value, fieldEnumValue);
+                    else
+                        newMap.set(key, value as FieldEnumValue);
+                }
+    
+                // TODO : painfully slow but necesasry. Find another way ?
+                fieldEnumValue.parent.values.clear()
+                for (let [key, value] of newMap) {
+                    fieldEnumValue.parent.values.set(key, value);
+                }
+                fieldEnumValue.enum = textInputEnum.value;
+                fieldEnumValue.parsed = true;
+            }
+            else {
+                if (fieldEnumValue.parsed)
+                    textInputEnum.value = fieldEnumValue.enum;
+                else 
+                    fieldEnumValue.parent.values.delete(fieldEnumValue.enum);
+            }
+        }
+
+        const textInputDescription = ref(fieldEnumValue.description);
+        const textInputDescriptionStruct = {
+            input: textInputDescription,
+            isValid: (textInput) => {
+                return textInput.length > 0;
+            },
+            placeholder: "fieldEnumValue description",
+            focusOnCreate: false
+        };
+
+        const onDescriptionFocusOut = () => {
+            if (fieldEnumValue.description == textInputDescription.value)
+                return;
+
+            if (textInputDescriptionStruct.isValid(textInputDescription.value)) {
+                fieldEnumValue.description = textInputDescription.value;
+            }
+            else {
+                textInputDescription.value = fieldEnumValue.description;
+            }
+        }
+
+        const onDelete = () => {
+            fieldEnumValue.parent.values.delete(fieldEnumValue.enum);
+        }
+
+        return {
+            textInputEnumStruct,
+            onEnumFocusOut,
+
+            textInputDescriptionStruct,
+            onDescriptionFocusOut,
+
+            fieldEnumValue,
+            onDelete,
+        };
+    },
+    template: `
+    <div class="btn-group w-100 d-flex" role="group">
+        <button class="btn btn-danger me-2 p-0" @click="onDelete" style="flex 1">🗑️</button>
+        <input-vue :inputStruct="textInputEnumStruct" @inputdone="onEnumFocusOut"></input-vue>
+        <input-vue :inputStruct="textInputDescriptionStruct" @inputdone="onDescriptionFocusOut"></input-vue>
+    </div>
+    `
+}
 
 export class Field extends FIXElem {
     // The name of the field.
-    private _name: string;
+    name: string;
     // The number of the field.
-    private _number: number;
+    number: number;
     // The type of the field.
     private _type: string;
     // The values associated with the field.
-    private _values: Map<string, FieldEnumValue>;
+    values: Map<string, FieldEnumValue>;
     // Whether the field is uncommon.
-    private _uncommon: boolean;
+    uncommon: boolean;
 
     /**
      * Creates a new instance of the Field class.
@@ -28,30 +123,30 @@ export class Field extends FIXElem {
      */
     constructor(fixTree: IFIXTree, name?: string, number?: number, type?: string, values?: Map<string, FieldEnumValue>, uncommon?: boolean) {
         super(fixTree);
-        this._name = name;
-        this._number = number;
+        this.name = name;
+        this.number = number;
         this.type = type;
-        this._values = values;
-        this._uncommon = uncommon;
+        this.values = values;
+        this.uncommon = uncommon;
     }
 
-    async parse(fieldElement: Element, parsingConfig: ParsingConfig): Promise<boolean> {
+    parse(fieldElement: Element, parsingConfig: ParsingConfig): boolean {
         let parsingOk = true;
 
-        this._name = fieldElement.getAttribute("name");
+        this.name = fieldElement.getAttribute("name");
         const numberAttribute = fieldElement.getAttribute("number");
-        this._number = numberAttribute !== null ? parseInt(numberAttribute) : null;
+        this.number = numberAttribute !== null ? parseInt(numberAttribute) : null;
         this._type = fieldElement.getAttribute("type");
-        this._values = new Map<string, FieldEnumValue>();
-        this._uncommon = fieldElement.hasAttribute("uncommon");
+        this.values = new Map<string, FieldEnumValue>();
+        this.uncommon = fieldElement.hasAttribute("uncommon");
 
-        if (this._name === null) {
+        if (this.name === null) {
             parsingOk = false;
             this._parsingErrors.set(`Invalid field: missing attribute 'name' in ${elemToMinimalStr(fieldElement)}`, undefined);
         }
 
-        if (this._number === null || isNaN(this._number) || !Number.isInteger(this._number)) {
-            this._number = 0;
+        if (this.number === null || isNaN(this.number) || !Number.isInteger(this.number)) {
+            this.number = 0;
             this._parsingErrors.set(`Invalid field: missing or invalid attribute 'number' in ${elemToMinimalStr(fieldElement)}`, undefined);
         }
 
@@ -72,7 +167,7 @@ export class Field extends FIXElem {
                 if (description === undefined)
                     throw new Error(`Invalid value: missing attribute 'description' in ${elemToMinimalStr(valueElement)}`);
 
-                this._values.set(enumValue, { enum: enumValue, description, uncommon });
+                this.values.set(enumValue, { parent: this, enum: enumValue, description, uncommon, parsed: true });
             } catch (error) {
                 // TODO : redo this ? Nested error container may not be a good idea
                 let parentMsg = `Invalid value in field: ${elemToMinimalStr(fieldElement)}`;
@@ -92,14 +187,6 @@ export class Field extends FIXElem {
         FieldTypeSingleton.getInstance().removeType(this._type);
     }
 
-    get name(): string {
-        return this._name;
-    }
-
-    get number(): number {
-        return this._number;
-    }
-
     get type(): string {
         return this._type;
     }
@@ -114,14 +201,6 @@ export class Field extends FIXElem {
         this._type = type;
     }
 
-    get values(): Map<string, FieldEnumValue> {
-        return this._values;
-    }
-
-    get uncommon(): boolean {
-        return this._uncommon;
-    }
-
     /**
      * Serializes the field to an XML document.
      * @param document The XML document to serialize to.
@@ -129,14 +208,14 @@ export class Field extends FIXElem {
      */
     serialize(document: Document, parentNode: Element, metadata: boolean): Element {
         const fieldElement = document.createElement("field");
-        fieldElement.setAttribute("name", this._name);
-        fieldElement.setAttribute("number", this._number.toString());
+        fieldElement.setAttribute("name", this.name);
+        fieldElement.setAttribute("number", this.number.toString());
         fieldElement.setAttribute("type", this._type);
 
-        if (metadata && this._uncommon)
+        if (metadata && this.uncommon)
             fieldElement.setAttribute("uncommon", "true");
 
-        for (const [enumValue, value] of this._values) {
+        for (const [enumValue, value] of this.values) {
             const valueElement = document.createElement("value");
             valueElement.setAttribute("enum", enumValue);
             valueElement.setAttribute("description", value.description);
@@ -156,93 +235,174 @@ export const FieldVue = {
     props : {
         field: Field,
     },
+    components: {
+        InputVue,
+        AccordionVue,
+        FilterVue,
+        FieldEnumValueVue,
+    },
     setup(props) {
-        
+        const field = props.field;
+        const id = computed(() => `itemField${props.field.name}`);
+
+        const filterValuesStruct = {
+            filterString: ref("")
+        }
+
+        const filterFunc = (key: string) => {
+            return key.toLowerCase().includes(filterValuesStruct.filterString.value.toLowerCase());
+        };
+
+        const textInputType = ref(field.type);
+        const textInputTypeStruct = {
+            input: textInputType,
+            isValid: (textInput) => {
+                return textInput.length > 0;
+            },
+            placeholder: "Field type",
+            focusOnCreate: false
+        };
+
+        const onTypeFocusOut = () => {
+            if (field.type == textInputType.value)
+                return;
+
+            if (textInputTypeStruct.isValid(textInputType.value)) {
+                field.type = textInputType.value;
+            }
+            else {
+                textInputType.value = field.type;
+            }
+        }
+
+        const textInputName = ref(field.name);
+        const textInputNameStruct = {
+            input: textInputName,
+            isValid: (textInput) => {
+                return textInput.length > 0 && (textInput == field.name || !field.fixTree._fieldsMap.has(textInput));
+            },
+            placeholder: "Field name",
+            focusOnCreate: !field._parsed
+        };
+
+        const onNameFocusOut = () => {
+            if (field.name == textInputName.value)
+                return;
+
+            if (textInputNameStruct.isValid(textInputName.value)) {
+                let newMap = new Map<string, Field>();
+                for (let [key, value] of field.fixTree._fieldsMap) {
+                    if (key == field.name)
+                        newMap.set(textInputName.value, field);
+                    else
+                        newMap.set(key, value as Field);
+                }
+    
+                // TODO : painfully slow but necesasry. Find another way ?
+                field.fixTree._fieldsMap.clear()
+                for (let [key, value] of newMap) {
+                    field.fixTree._fieldsMap.set(key, value);
+                }
+                field.name = textInputName.value;
+                field._parsed = true;
+                
+                // field.fixTree._fieldsMap.delete(field.name);
+                // field.fixTree._fieldsMap.set(textInputName.value, field);
+                // field._parsed = true;
+            }
+            else {
+                if (field._parsed) {
+                    textInputName.value = field.name;
+                }
+                else {
+                    field.fixTree._fieldsMap.delete(field.name);
+                }
+            }
+        }
+
+        const textInputNumber = ref(field.number.toString());
+        const textInputNumberStruct = {
+            input: textInputNumber,
+            isValid: (textInput) => {
+                return textInput.length > 0 && !isNaN(Number(textInput));
+            },
+            placeholder: "Field number",
+            focusOnCreate: false
+        };
+
+        const onNumberFocusOut = () => {
+            const newNumber = Number(textInputNumber.value);
+            if (field.number === newNumber)
+                return;
+
+            if (textInputNumberStruct.isValid(textInputNumber.value)) {
+                field.number = newNumber;
+            } else {
+                textInputNumber.value = field.number.toString();
+            }
+        }
+
+        const addEnumValue = () => {
+            field.values.set("", { parent: field, enum: "", description: "", uncommon: false, parsed: false });
+        }
+
+        const onDelete = () => {
+            field.fixTree._fieldsMap.delete(field.name);
+        }
+
         return {
-            field: props.field 
+            id,
+            field,
+
+            filterValuesStruct,
+            filterFunc,
+
+            textInputTypeStruct,
+            onTypeFocusOut,
+
+            textInputNameStruct,
+            onNameFocusOut,
+            
+            textInputNumberStruct,
+            onNumberFocusOut,
+
+            addEnumValue,
+            onDelete,
         }
     },
+    // <div class="btn-group w-100 d-flex" role="group">
+    // </div>
     template: `
-        <div>field : {{ field.name }}</div>
-        `
-    ,
+        <div class="btn-group w-100 d-flex" role="group">
+            <!-- TODO : add a way to edit a field => field group ?-->
+            <button class="btn btn-danger me-2 p-0" @click="onDelete" style="flex 1">🗑️</button>
+            <input-vue :inputStruct="textInputTypeStruct" @inputdone="onTypeFocusOut"></input-vue>
+            <input-vue :inputStruct="textInputNameStruct" @inputdone="onNameFocusOut"></input-vue>
+            <input-vue :inputStruct="textInputNumberStruct" @inputdone="onNumberFocusOut"></input-vue>
+        </div>
+    `,
+
+    // <accordion-vue :id="id" :withBody=true :defaultExpanded=false>
+    //     <template v-slot:header> 
+    //         <!-- TODO : add a way to edit a field => field group ?-->
+    //         <button class="btn btn-danger me-2 p-0" @click="onDelete" style="flex 1">🗑️</button>
+    //         <input-vue :inputStruct="textInputTypeStruct" @inputdone="onTypeFocusOut"></input-vue>
+    //         <input-vue :inputStruct="textInputNameStruct" @inputdone="onNameFocusOut"></input-vue>
+    //         <input-vue :inputStruct="textInputNumberStruct" @inputdone="onNumberFocusOut"></input-vue>
+    //     </template>
+    //     <template v-slot:body>
+    //         <h3 class="d-flex">
+    //             <filter-vue :filterStruct="filterValuesStruct" class="flex-fill"></filter-vue>
+    //             <button class="btn fs-4" style="padding-top: 0; padding-bottom: 0" @click="addEnumValue">+</button>
+    //         </h3>
+    //         <div class="overflow-y-auto flex-contain d-flex flex-column">
+    //             <div class="flex-contain">
+    //                 <field-enum-value-vue v-for="valueIt of field.values" :fieldEnumValue="valueIt[1]" :id="valueIt[0]" :key="valueIt[0]" v-show="filterFunc(valueIt[1].description, filterValuesStruct.filterString.value)"></field-enum-value-vue>
+    //             </div>
+    //         </div>
+    //     </template>
+    // </accordion-vue>
 }
-
-// export class Reference extends FIXElem {
-    
-//     private _tagName: string;
-//     private _name: string;
-//     private _required: boolean;
-//     private _uncommon: boolean;
-
-//     constructor(tagName?: string, name?: string, required?: boolean, uncommon?: boolean ) {
-//         super();
-//         this._tagName = tagName;
-//         this._name = name;
-//         this._required = required;
-//         this._uncommon = uncommon;
-//     }
-
-//     async parse(referenceElement: Element, parsingConfig: ParsingConfig): Promise<boolean> {
-//         let parsingOk = true;
-
-//         this._tagName = referenceElement.tagName;
-//         this._name = referenceElement.getAttribute("name");
-//         const requiredAttribute = referenceElement.getAttribute("required");
-//         this._required = requiredAttribute !== null ? requiredAttribute === "Y" : null;
-//         this._uncommon = referenceElement.hasAttribute("uncommon");
-
-//         if (this._tagName !== "component" && this._tagName !== "field") {
-//             parsingOk = false;
-//             this._parsingErrors.set(`Invalid field: invalid tag name '${this._tagName}' in ${elemToMinimalStr(referenceElement)} Must be 'component' or 'field'`, undefined);
-//         }
-
-//         if (this._name === null) {
-//             parsingOk = false;
-//             this._parsingErrors.set(`Invalid field: missing attribute 'name' in ${elemToMinimalStr(referenceElement)}`, undefined);
-//         }
-
-//         if (this._required === null) {
-//             this._required = false;
-//             this._parsingErrors.set(`Invalid field: missing attribute 'required' in ${elemToMinimalStr(referenceElement)}`, undefined);
-//         }
-
-//         this._parsed = true;
-//         return parsingOk;
-//     }
-
-//     get tagName(): string {
-//         return this._tagName;
-//     }
-
-//     get name(): string {
-//         return this._name;
-//     }
-
-//     get required(): boolean {
-//         return this._required;
-//     }
-
-//     get uncommon(): boolean {
-//         return this._uncommon;
-//     }
-
-//     /**
-//      * Serializes the reference to an XML document.
-//      * @param document The XML document to serialize to.
-//      * @param parentNode The parent node to append the serialized reference to.
-//      */
-//     serialize(document: Document, parentNode: Element, metadata: boolean): Element {
-//         const referenceElement = document.createElement(this._tagName);
-//         referenceElement.setAttribute("name", this._name);
-//         referenceElement.setAttribute("required", this._required ? "Y" : "N");
-//         if (metadata && this._uncommon)
-//             referenceElement.setAttribute("uncommon", "true");
-
-//         parentNode.appendChild(referenceElement);
-//         return referenceElement;
-//     }
-// }
 
 export class FieldTypeSingleton {
     private static instance: FieldTypeSingleton;
@@ -254,7 +414,7 @@ export class FieldTypeSingleton {
 
     public static getInstance(): FieldTypeSingleton {
         if (!FieldTypeSingleton.instance) {
-            FieldTypeSingleton.instance = new FieldTypeSingleton();
+            FieldTypeSingleton.instance = reactive(new FieldTypeSingleton()) as FieldTypeSingleton;
         }
         return FieldTypeSingleton.instance;
     }

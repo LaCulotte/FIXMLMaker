@@ -2,7 +2,7 @@ import { FIXTree } from "./fixClass/FIXTree.js";
 
 var parser = new DOMParser();
 
-export async function loadXmlInput(): Promise<FIXTree> {
+export function loadXmlInput(): Promise<FIXTree> {
     let elem: HTMLInputElement = document.getElementById("xml-input") as HTMLInputElement;
     var file = elem?.files[0];
     if (!file) {
@@ -18,7 +18,7 @@ export async function loadXmlInput(): Promise<FIXTree> {
     });
 }
 
-export async function loadRemoteXmlFile(path: string) : Promise<FIXTree> {
+export function loadRemoteXmlFile(path: string) : Promise<FIXTree> {
     return fetch(path)
     .then((res) => {
         return res.text();
@@ -32,9 +32,9 @@ export async function loadRemoteXmlFile(path: string) : Promise<FIXTree> {
 }
 
 
-export async function loadFIXTree(xmlString: string) : Promise<FIXTree> {
+export function loadFIXTree(xmlString: string) : FIXTree {
     let document = parser.parseFromString(xmlString, "text/xml");
-    await window.fixTree.parse(document);
+    window.fixTree.parse(document);
 
     return window.fixTree;
 }

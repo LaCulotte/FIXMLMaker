@@ -1,12 +1,3 @@
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 import { getFirstChildByTagName, elemToMinimalStr } from "../XmlHelper.js";
 import { BaseGroup, Message, Component } from "./Group.js";
 import { Field } from "./Field.js";
@@ -43,33 +34,31 @@ export class FIXTree {
         this._type = type;
     }
     parse(fixmlDocument, parsingConfig = new ParsingConfig()) {
-        return __awaiter(this, void 0, void 0, function* () {
-            if (this._alreadyParsed && !this._parsed)
-                throw new BeingParsedError("FIXTree is already being parsed.");
-            this._parsed = false;
-            try {
-                this._fixmlDocument = fixmlDocument;
-                let fixElem = getFirstChildByTagName(this._fixmlDocument, "fix");
-                if (fixElem === undefined)
-                    throw new Error("Invalid FIXML : missing root element <fix>");
-                if (!this._alreadyParsed) {
-                    this._major = fixElem.getAttribute("major");
-                    this._minor = fixElem.getAttribute("minor");
-                    this._servicepack = fixElem.getAttribute("servicepack");
-                    this._type = fixElem.getAttribute("type");
-                }
+        if (this._alreadyParsed && !this._parsed)
+            throw new BeingParsedError("FIXTree is already being parsed.");
+        this._parsed = false;
+        try {
+            this._fixmlDocument = fixmlDocument;
+            let fixElem = getFirstChildByTagName(this._fixmlDocument, "fix");
+            if (fixElem === undefined)
+                throw new Error("Invalid FIXML : missing root element <fix>");
+            if (!this._alreadyParsed) {
                 this._major = fixElem.getAttribute("major");
-                this._alreadyParsed = true;
-                yield this.loadFields(fixElem, parsingConfig);
-                yield this.loadMessages(fixElem, parsingConfig);
-                yield this.loadComponents(fixElem, parsingConfig);
-                yield this.loadHeaderAndTrailer(fixElem, parsingConfig);
-                return this;
+                this._minor = fixElem.getAttribute("minor");
+                this._servicepack = fixElem.getAttribute("servicepack");
+                this._type = fixElem.getAttribute("type");
             }
-            finally {
-                this._parsed = true;
-            }
-        });
+            this._major = fixElem.getAttribute("major");
+            this._alreadyParsed = true;
+            this.loadFields(fixElem, parsingConfig);
+            this.loadMessages(fixElem, parsingConfig);
+            this.loadComponents(fixElem, parsingConfig);
+            this.loadHeaderAndTrailer(fixElem, parsingConfig);
+            return this;
+        }
+        finally {
+            this._parsed = true;
+        }
     }
     /**
      * Loads fields from the specified FIXML element.
@@ -77,18 +66,19 @@ export class FIXTree {
      * @param fixElem - The FIXML element to load fields from.
      */
     loadFields(fixElem, parsingConfig) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let fieldElem = getFirstChildByTagName(fixElem, "fields");
-            if (fieldElem === undefined)
-                return;
-            for (let child of fieldElem.children) {
-                let field = reactive(new Field(this));
-                if (yield field.parse(child, parsingConfig))
-                    this._fieldsMap.set(field.name, field);
-                else
-                    this._fieldsParsingErrors.set(`Invalid field ${elemToMinimalStr(child)} in ${elemToMinimalStr(fieldElem)}`, field._parsingErrors);
-            }
-        });
+        let fieldElem = getFirstChildByTagName(fixElem, "fields");
+        if (fieldElem === undefined)
+            return;
+        let additionalFields = new Map();
+        for (let child of fieldElem.children) {
+            let field = reactive(new Field(this));
+            if (field.parse(child, parsingConfig))
+                additionalFields.set(field.name, field);
+            else
+                this._fieldsParsingErrors.set(`Invalid field ${elemToMinimalStr(child)} in ${elemToMinimalStr(fieldElem)}`, field._parsingErrors);
+        }
+        // Made this way to avoid too many updates on fieldsMap
+        this._fieldsMap = new Map([...this._fieldsMap, ...additionalFields]);
     }
     /**
      * Loads messages from the specified FIXML element.
@@ -96,18 +86,19 @@ export class FIXTree {
      * @param fixElem - The FIXML element to load messages from.
      */
     loadMessages(fixElem, parsingConfig) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let messagesElem = getFirstChildByTagName(fixElem, "messages");
-            if (messagesElem === undefined)
-                return;
-            for (let child of messagesElem.children) {
-                let message = reactive(new Message(this));
-                if (yield message.parse(child, parsingConfig))
-                    this._messagesMap.set(message.name, message);
-                else
-                    this._messagesParsingErrors.set(`Invalid message ${elemToMinimalStr(child)} in ${elemToMinimalStr(messagesElem)}`, message._parsingErrors);
-            }
-        });
+        let messagesElem = getFirstChildByTagName(fixElem, "messages");
+        if (messagesElem === undefined)
+            return;
+        let additionalMessages = new Map();
+        for (let child of messagesElem.children) {
+            let message = reactive(new Message(this));
+            if (message.parse(child, parsingConfig))
+                additionalMessages.set(message.name, message);
+            else
+                this._messagesParsingErrors.set(`Invalid message ${elemToMinimalStr(child)} in ${elemToMinimalStr(messagesElem)}`, message._parsingErrors);
+        }
+        // Made this way to avoid too many updates on messagesMap
+        this._messagesMap = new Map([...this._messagesMap, ...additionalMessages]);
     }
     /**
      * Loads components from the specified FIXML element.
@@ -115,21 +106,19 @@ export class FIXTree {
      * @param fixElem - The FIXML element to load components from.
      */
     loadComponents(fixElem, parsingConfig) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let componentsElem = getFirstChildByTagName(fixElem, "components");
-            if (componentsElem === undefined)
-                return;
-            let additionalComponents = new Map();
-            for (let child of componentsElem.children) {
-                let component = reactive(new Component(this));
-                if (yield component.parse(child, parsingConfig))
-                    additionalComponents.set(component.name, component);
-                else
-                    this._componentsParsingErrors.set(`Invalid component ${elemToMinimalStr(child)} in ${elemToMinimalStr(componentsElem)}`, component._parsingErrors);
-            }
-            // Made this way to avoid too many updates on componentsMap
-            this._componentsMap = new Map([...this._componentsMap, ...additionalComponents]);
-        });
+        let componentsElem = getFirstChildByTagName(fixElem, "components");
+        if (componentsElem === undefined)
+            return;
+        let additionalComponents = new Map();
+        for (let child of componentsElem.children) {
+            let component = reactive(new Component(this));
+            if (component.parse(child, parsingConfig))
+                additionalComponents.set(component.name, component);
+            else
+                this._componentsParsingErrors.set(`Invalid component ${elemToMinimalStr(child)} in ${elemToMinimalStr(componentsElem)}`, component._parsingErrors);
+        }
+        // Made this way to avoid too many updates on componentsMap
+        this._componentsMap = new Map([...this._componentsMap, ...additionalComponents]);
     }
     /**
      * Loads the header and trailer from the specified FIXML element.
@@ -137,14 +126,12 @@ export class FIXTree {
      * @param fixElem - The FIXML element to load the header and trailer from.
      */
     loadHeaderAndTrailer(fixElem, parsingConfig) {
-        return __awaiter(this, void 0, void 0, function* () {
-            let headerElem = getFirstChildByTagName(fixElem, "header");
-            if (headerElem !== undefined)
-                yield this._header.parse(headerElem, parsingConfig);
-            let trailerElem = getFirstChildByTagName(fixElem, "trailer");
-            if (trailerElem !== undefined)
-                yield this._trailer.parse(trailerElem, parsingConfig);
-        });
+        let headerElem = getFirstChildByTagName(fixElem, "header");
+        if (headerElem !== undefined)
+            this._header.parse(headerElem, parsingConfig);
+        let trailerElem = getFirstChildByTagName(fixElem, "trailer");
+        if (trailerElem !== undefined)
+            this._trailer.parse(trailerElem, parsingConfig);
     }
     /**
      * Serializes the FIXTree object to xml.

@@ -111,12 +111,12 @@
         </component>
         <component name='MsgTypeGrp' /> -->
         <component name='HopGrp'>
-            <field name='HopCompID' required='N' />
+            <field name='HopCompID' required='Y' />
             <field name='HopSendingTime' required='N' />
             <field name='HopRefID' required='N' />
         </component>
         <component name='HopGrp2'>
-            <field name='HopCompID' required='N' />
+            <component name='HopCompID' required='N' />
             <field name='HopSendingTime' required='N' />
             <field name='HopRefID' required='N' />
         </component>
@@ -128,10 +128,10 @@
             <field name='HopRefIDe' required='N' />
             <field name='HopRefIDr' required='N' />
             <field name='HopRefIDt' required='N' />
-            <field name='HopRefIDt' required='N' />
-            <field name='HopRefIDy' required='N' />
-            <field name='HopRefIDu' required='N' />
-            <field name='HopRefIDi' required='N' />
+            <field name='HopRefIDt' required='Y' />
+            <field name='HopRefIDy' required='Y' />
+            <field name='HopRefIDu' required='Y' />
+            <field name='HopRefIDi' required='Y' />
             <field name='HopRefIDo' required='N' />
             <field name='HopRefIDp' required='N' />
             <field name='HopRefIDq' required='N' />
