@@ -27,10 +27,12 @@ export const FilterVue = {
         };
     },
     template: `
+    <div>
     <form style="display: inline-block; margin:0;" action="javascript:;" autocomplete="off">
-        <input v-model="filterStruct.filterString.value" class="form-control" :id="inputTextUUID" placeholder="Search" @keydown="onKeyDown"></input>
+    <input v-model="filterStruct.filterString.value" class="form-control" :id="inputTextUUID" placeholder="Search" @keydown="onKeyDown"></input>
         <input type="submit" hidden @click="onConfirm"></input>
     </form>
+    </div>
     `
     // <input type="submit" hidden @click="onConfirm"></input>
 };
