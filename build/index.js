@@ -34,9 +34,9 @@ createApp({
             });
             window.Split(['#left-panel', '#middle-panel'], {
                 gutterSize: 5,
-                sizes: [100, 50],
+                sizes: [50, 100],
             });
-            window.Split(['#middle-panel', '#right-panel'], {
+            window.Split(['#middle-middle-panel', '#middle-right-panel'], {
                 gutterSize: 5,
             });
         });
@@ -143,7 +143,8 @@ createApp({
                 </div>
             </div>
         </div>
-        <div class="d-flex flex-column flex-contain" id="middle-panel">
+        <div class="d-flex flex-row h-100 flex-contain" id="middle-panel">
+        <div class="d-flex flex-column flex-contain" id="middle-middle-panel">
             <div class="d-flex flex-column flex-contain" id="header-panel">
                 <div id="header-header">
                     <h2 class="border d-flex">
@@ -171,7 +172,7 @@ createApp({
                 </div>
             </div>
         </div>
-        <div class="d-flex flex-column" id="right-panel">
+        <div class="d-flex flex-column" id="middle-right-panel">
             <h2 class="border d-flex">
                 <span class="flex-fill">Fields</span>
                 <filter-vue :filterStruct="filterFieldsStruct" :key="'fields-filter'"></filter-vue>
@@ -179,10 +180,10 @@ createApp({
             </h2>
             <div class="overflow-y-auto flex-contain d-flex flex-column">
                 <div class="accordion d-flex flex-column flex-contain fix-accordion">
-                    <input/>
                     <field-vue v-for="fieldIt of fixTree._fieldsMap" :field="fieldIt[1]" :id="fieldIt[0]" :key="fieldIt[0]" v-show="filterFunc(fieldIt[0], filterFieldsStruct.filterString.value)"></field-vue>
                 </div>
             </div>
+        </div>
         </div>
     </div>
     `

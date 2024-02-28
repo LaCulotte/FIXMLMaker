@@ -204,8 +204,8 @@ export const ReferenceVue = {
     template: `
         <accordion-vue :id="id" :withBody="isGroup" :defaultExpanded=true>
             <template v-slot:header>
-                <button class="btn btn-danger me-2 p-0" @click="onDelete" style="flex 1">🗑️</button>
-                <div>
+                <button class="ref_delete btn btn-danger me-2 p-0" @click="onDelete" style="flex 1">🗑️</button>
+                <div class="ref_select">
                     <select class="form-select" v-model="reference.tagName">
                         <option value="field">field</option>
                         <option value="component">comp</option>
@@ -213,9 +213,11 @@ export const ReferenceVue = {
                     </select>
                 </div>
 
-                <input-vue :inputStruct="textInputStruct" @inputdone="onFocusOut"></input-vue>
-                <input class="btn-check" v-model="reference.required" type="checkbox" :id="checkboxId"/>
-                <label class="btn" :for="checkboxId">Req: {{ reference.required ? "Y":"N" }}</label>
+                <input-vue class="ref_input" :inputStruct="textInputStruct" @inputdone="onFocusOut"></input-vue>
+                <div class="ref_req">
+                    <input class="btn-check" v-model="reference.required" type="checkbox" :id="checkboxId"/>
+                    <label class="btn ref_req_label" :for="checkboxId">Req: {{ reference.required ? "Y":"N" }}</label>
+                </div>
             </template>
             <template v-slot:body>
                 <h3 class="d-flex">

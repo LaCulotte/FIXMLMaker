@@ -1,5 +1,5 @@
 // export function generateFilter(stringFilter, 
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUpdated } from "vue";
 export const FilterVue = {
     props: {
         filterStruct: {
@@ -51,10 +51,8 @@ export const InputVue = {
         const baseInput = props.inputStruct.input.value;
         const textInputId = ref(crypto.randomUUID());
         const textInputValidClass = computed(() => props.inputStruct.isValid(textInput.value) ? "" : " is-invalid");
-        // const textInputValidClass = ref(props.inputStruct.isValid(textInput.value) ? "" : " is-invalid");
         const isEditing = ref(false);
         const onFocusOut = () => {
-            // textInputValidClass.value = props.inputStruct.isValid(textInput.value) ? "" : " is-invalid";
             isEditing.value = false;
             emit("inputdone");
         };
@@ -79,6 +77,10 @@ export const InputVue = {
                 props.inputStruct.focusOnCreate = false;
             });
         }
+        onUpdated(() => {
+            if (isEditing.value)
+                document.getElementById(textInputId.value).focus();
+        });
         return {
             textInput,
             textInputId,
@@ -92,14 +94,16 @@ export const InputVue = {
         };
     },
     template: `
-        <span class="input-group" style="flex: 10">
+        <span class="input-group" style="flex: 10 10 auto">
             <form v-if="isEditing" style="display: inline-block; margin:0" action="javascript:;" autocomplete="off">
                 <input :class="'form-control' + textInputValidClass" :id="textInputId" :placeholder="placeholder" v-model="textInput" @focusout="onFocusOut" @keydown="onKeyDown"></input>
                 <input type="submit" hidden @click="onConfirm"></input>
             </form>
-            <span v-else :class="'form-control' + textInputValidClass" :id="textInputId" @click="onClick">
-                {{textInput}}
-            </span>
+            <div v-else style="display: inline-block; margin:0;" :class="'form-control' + textInputValidClass" @click="onClick">
+                <div style="overflow: hidden">
+                    {{textInput}}
+                </div>
+            </div>
         </span>
     `
     // <span class="input-group" style="flex: 10">
@@ -139,7 +143,7 @@ export const AccordionVue = {
     },
     template: `
     <div class="accordion-item d-flex flex-column">
-        <div class="accordion-header">
+        <div class="accordion-header w-100">
             <div class="btn-group w-100 d-flex" role="group">
                 <slot name="header"></slot>
 

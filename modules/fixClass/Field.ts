@@ -41,7 +41,7 @@ export const FieldEnumValueVue = {
                     else
                         newMap.set(key, value as FieldEnumValue);
                 }
-    
+                
                 // TODO : painfully slow but necesasry. Find another way ?
                 fieldEnumValue.parent.values.clear()
                 for (let [key, value] of newMap) {
@@ -49,6 +49,8 @@ export const FieldEnumValueVue = {
                 }
                 fieldEnumValue.enum = textInputEnum.value;
                 fieldEnumValue.parsed = true;
+
+                // Prompt => change everywhere ?
             }
             else {
                 if (fieldEnumValue.parsed)
@@ -386,23 +388,32 @@ export const FieldVue = {
             onDelete,
         }
     },
-    // <div class="btn-group w-100 d-flex" role="group">
-    // </div>
     template: `
-        <div class="btn-group w-100 d-flex" role="group">
-            <!-- TODO : add a way to edit a field => field group ?-->
-            <div v-if="editing" class="btn-group w-100 d-flex">
-                <button class="btn btn-danger me-2 p-0" @click="onDelete" style="flex 1">🗑️</button>
-                <input-vue :inputStruct="textInputTypeStruct" @inputdone="onTypeFocusOut"></input-vue>
-                <input-vue :inputStruct="textInputNameStruct" @inputdone="onNameFocusOut"></input-vue>
-                <input-vue :inputStruct="textInputNumberStruct" @inputdone="onNumberFocusOut"></input-vue>
-            </div>
-            <div v-else class="btn-group w-100" @click="editing=true">
-                {{field.type}}{{field.name}}{{field.number}}
-            </div>
-        </div>
-            `,
-        // <span>{{field.name}}</span>
+        <accordion-vue :id="id" :withBody=true :defaultExpanded=false>
+            <template v-slot:header> 
+                <button class="field_delete" class="btn btn-danger me-2 p-0" @click="onDelete" style="flex 1">🗑️</button>
+                <input-vue class="field_input" :inputStruct="textInputTypeStruct" @inputdone="onTypeFocusOut"></input-vue>
+                <input-vue class="field_input" :inputStruct="textInputNameStruct" @inputdone="onNameFocusOut"></input-vue>
+                <input-vue class="field_number_input" :inputStruct="textInputNumberStruct" @inputdone="onNumberFocusOut"></input-vue>
+            </template>
+            <template v-slot:body>
+                <h3 class="d-flex">
+                    <filter-vue :filterStruct="filterValuesStruct" class="flex-fill"></filter-vue>
+                    <button class="btn fs-4" style="padding-top: 0; padding-bottom: 0" @click="addEnumValue">+</button>
+                </h3>
+                <div class="overflow-y-auto flex-contain d-flex flex-column">
+                    <div class="flex-contain">
+                        <field-enum-value-vue v-for="valueIt of field.values" :fieldEnumValue="valueIt[1]" :id="valueIt[0]" :key="valueIt[0]" v-show="filterFunc(valueIt[1].description, filterValuesStruct.filterString.value)"></field-enum-value-vue>
+                    </div>
+                </div>
+            </template>
+        </accordion-vue>`,
+        // <div class="btn-group w-100 d-flex" style="font-size:10px" role="group">
+        //     <button class="field_delete" class="btn btn-danger me-2 p-0" @click="onDelete" style="flex 1">🗑️</button>
+        //     <input-vue class="field_input" :inputStruct="textInputTypeStruct" @inputdone="onTypeFocusOut"></input-vue>
+        //     <input-vue class="field_input" :inputStruct="textInputNameStruct" @inputdone="onNameFocusOut"></input-vue>
+        //     <input-vue class="field_number_input" :inputStruct="textInputNumberStruct" @inputdone="onNumberFocusOut"></input-vue>
+        // </div>`,
             
     // <accordion-vue :id="id" :withBody=true :defaultExpanded=false>
     //     <template v-slot:header> 
