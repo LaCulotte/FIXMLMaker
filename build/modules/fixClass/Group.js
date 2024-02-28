@@ -146,7 +146,7 @@ export const ReferenceVue = {
                 return false;
             },
             placeholder: "Reference name",
-            focusOnCreate: false,
+            focusOnCreate: !reference._parsed,
             // TODO : autocomplete
         };
         const onFocusOut = () => {
@@ -169,7 +169,12 @@ export const ReferenceVue = {
                 reference._parsed = true;
             }
             else {
-                textInputName.value = reference.name;
+                if (reference._parsed) {
+                    textInputName.value = reference.name;
+                }
+                else {
+                    reference.parent._references.delete(reference.name);
+                }
             }
         };
         const onDelete = () => {

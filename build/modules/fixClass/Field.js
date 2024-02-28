@@ -233,7 +233,7 @@ export const FieldVue = {
         };
         const onNameFocusOut = () => {
             editing.value = false;
-            if (field.name == textInputName.value)
+            if (field._parsed && field.name == textInputName.value)
                 return;
             if (textInputNameStruct.isValid(textInputName.value)) {
                 let newMap = new Map();

@@ -28,10 +28,10 @@ export const FilterVue = {
     },
     template: `
     <div>
-    <form style="display: inline-block; margin:0;" action="javascript:;" autocomplete="off">
-    <input v-model="filterStruct.filterString.value" class="form-control" :id="inputTextUUID" placeholder="Search" @keydown="onKeyDown"></input>
-        <input type="submit" hidden @click="onConfirm"></input>
-    </form>
+        <form style="display: inline-block; margin:0;" action="javascript:;" autocomplete="off">
+        <input v-model="filterStruct.filterString.value" class="form-control" :id="inputTextUUID" placeholder="Search" @keydown="onKeyDown"></input>
+            <input type="submit" hidden @click="onConfirm"></input>
+        </form>
     </div>
     `
     // <input type="submit" hidden @click="onConfirm"></input>
@@ -54,6 +54,8 @@ export const InputVue = {
         const textInputId = ref(crypto.randomUUID());
         const textInputValidClass = computed(() => props.inputStruct.isValid(textInput.value) ? "" : " is-invalid");
         const isEditing = ref(false);
+        if (props.inputStruct.focusOnCreate)
+            isEditing.value = true;
         const onFocusOut = () => {
             isEditing.value = false;
             emit("inputdone");
@@ -101,11 +103,11 @@ export const InputVue = {
                 <input :class="'form-control' + textInputValidClass" :id="textInputId" :placeholder="placeholder" v-model="textInput" @focusout="onFocusOut" @keydown="onKeyDown"></input>
                 <input type="submit" hidden @click="onConfirm"></input>
             </form>
-            <div v-else style="display: inline-block; margin:0;" :class="'form-control' + textInputValidClass" @click="onClick">
+            <button v-else style="display: inline-block; margin:0;" :class="'form-control' + textInputValidClass" @click="onClick">
                 <div style="overflow: hidden">
                     {{textInput}}
                 </div>
-            </div>
+            </button>
         </span>
     `
     // <span class="input-group" style="flex: 10">
