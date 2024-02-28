@@ -2,7 +2,7 @@ import { elemToMinimalStr } from "../XmlHelper.js";
 import { ParsingConfig, FIXElem, ParsingError, IFIXTree } from "./FIXElem.js";
 import { InputVue, AccordionVue, FilterVue } from "../Utils.js";
 
-import { ref, computed, reactive } from 'vue';
+import { ref, computed, reactive, watch } from 'vue';
 
 /**
  * Represents a field's enum in a FIXML message.
@@ -244,6 +244,7 @@ export const FieldVue = {
     setup(props) {
         const field = props.field;
         const id = computed(() => `itemField${props.field.name}`);
+        const editing = ref(false);
 
         const filterValuesStruct = {
             filterString: ref("")
@@ -264,6 +265,7 @@ export const FieldVue = {
         };
 
         const onTypeFocusOut = () => {
+            editing.value = false;
             if (field.type == textInputType.value)
                 return;
 
@@ -286,6 +288,7 @@ export const FieldVue = {
         };
 
         const onNameFocusOut = () => {
+            editing.value = false;
             if (field.name == textInputName.value)
                 return;
 
@@ -331,6 +334,7 @@ export const FieldVue = {
         };
 
         const onNumberFocusOut = () => {
+            editing.value = false;
             const newNumber = Number(textInputNumber.value);
             if (field.number === newNumber)
                 return;
@@ -350,9 +354,21 @@ export const FieldVue = {
             field.fixTree._fieldsMap.delete(field.name);
         }
 
+        // TODO : properly
+        // watch(editing, (new_editing) => {
+        //     if(new_editing)
+        //         textInputNameStruct.focusOnCreate = true;
+        // });
+
+        // onUpdated(() => {
+        //     if (editing.value)
+        //         document.getElementById(textInputId.value).focus();
+        // });
+
         return {
             id,
             field,
+            editing,
 
             filterValuesStruct,
             filterFunc,
@@ -375,13 +391,19 @@ export const FieldVue = {
     template: `
         <div class="btn-group w-100 d-flex" role="group">
             <!-- TODO : add a way to edit a field => field group ?-->
-            <button class="btn btn-danger me-2 p-0" @click="onDelete" style="flex 1">🗑️</button>
-            <input-vue :inputStruct="textInputTypeStruct" @inputdone="onTypeFocusOut"></input-vue>
-            <input-vue :inputStruct="textInputNameStruct" @inputdone="onNameFocusOut"></input-vue>
-            <input-vue :inputStruct="textInputNumberStruct" @inputdone="onNumberFocusOut"></input-vue>
+            <div v-if="editing" class="btn-group w-100 d-flex">
+                <button class="btn btn-danger me-2 p-0" @click="onDelete" style="flex 1">🗑️</button>
+                <input-vue :inputStruct="textInputTypeStruct" @inputdone="onTypeFocusOut"></input-vue>
+                <input-vue :inputStruct="textInputNameStruct" @inputdone="onNameFocusOut"></input-vue>
+                <input-vue :inputStruct="textInputNumberStruct" @inputdone="onNumberFocusOut"></input-vue>
+            </div>
+            <div v-else class="btn-group w-100" @click="editing=true">
+                {{field.type}}{{field.name}}{{field.number}}
+            </div>
         </div>
-    `,
-
+            `,
+        // <span>{{field.name}}</span>
+            
     // <accordion-vue :id="id" :withBody=true :defaultExpanded=false>
     //     <template v-slot:header> 
     //         <!-- TODO : add a way to edit a field => field group ?-->

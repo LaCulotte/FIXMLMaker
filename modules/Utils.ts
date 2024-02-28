@@ -86,13 +86,9 @@ export const InputVue = {
         if(props.inputStruct.focusOnCreate) {
             onMounted(() => {
                 document.getElementById(textInputId.value)?.focus();
+                props.inputStruct.focusOnCreate = false;
             });
         }
-
-        onUpdated(() => {
-            if (isEditing.value)
-                document.getElementById(textInputId.value).focus();
-        });
 
         return {
             textInput,
@@ -108,20 +104,20 @@ export const InputVue = {
     },
     template: `
         <span class="input-group" style="flex: 10">
-            <form v-if="isEditing" style="display: inline-block; margin:0" action="javascript:;" autocomplete="off">
+            <form style="display: inline-block; margin:0" action="javascript:;" autocomplete="off">
                 <input :class="'form-control' + textInputValidClass" :id="textInputId" :placeholder="placeholder" v-model="textInput" @focusout="onFocusOut" @keydown="onKeyDown"></input>
                 <input type="submit" hidden @click="onConfirm"></input>
             </form>
-            <span v-else :class="'form-control' + textInputValidClass" :id="textInputId" @click="onClick">
-                {{textInput}}
-            </span>
         </span>
     `
     // <span class="input-group" style="flex: 10">
-    //     <form style="display: inline-block; margin:0" action="javascript:;" autocomplete="off">
+    //     <form v-if="isEditing" style="display: inline-block; margin:0" action="javascript:;" autocomplete="off">
     //         <input :class="'form-control' + textInputValidClass" :id="textInputId" :placeholder="placeholder" v-model="textInput" @focusout="onFocusOut" @keydown="onKeyDown"></input>
     //         <input type="submit" hidden @click="onConfirm"></input>
     //     </form>
+    //     <span v-else :class="'form-control' + textInputValidClass" :id="textInputId" @click="onClick">
+    //         {{textInput}}
+    //     </span>
     // </span>
 }
 
