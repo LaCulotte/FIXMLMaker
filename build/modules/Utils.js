@@ -1,5 +1,5 @@
 // export function generateFilter(stringFilter, 
-import { ref, onMounted, onUpdated } from "vue";
+import { ref, computed, onMounted } from "vue";
 export const FilterVue = {
     props: {
         filterStruct: {
@@ -50,11 +50,11 @@ export const InputVue = {
         const textInput = props.inputStruct.input;
         const baseInput = props.inputStruct.input.value;
         const textInputId = ref(crypto.randomUUID());
-        // const textInputValidClass = computed(() => props.inputStruct.isValid(textInput.value) ? "" : " is-invalid");
-        const textInputValidClass = ref(props.inputStruct.isValid(textInput.value) ? "" : " is-invalid");
+        const textInputValidClass = computed(() => props.inputStruct.isValid(textInput.value) ? "" : " is-invalid");
+        // const textInputValidClass = ref(props.inputStruct.isValid(textInput.value) ? "" : " is-invalid");
         const isEditing = ref(false);
         const onFocusOut = () => {
-            textInputValidClass.value = props.inputStruct.isValid(textInput.value) ? "" : " is-invalid";
+            // textInputValidClass.value = props.inputStruct.isValid(textInput.value) ? "" : " is-invalid";
             isEditing.value = false;
             emit("inputdone");
         };
@@ -76,12 +76,9 @@ export const InputVue = {
             onMounted(() => {
                 var _a;
                 (_a = document.getElementById(textInputId.value)) === null || _a === void 0 ? void 0 : _a.focus();
+                props.inputStruct.focusOnCreate = false;
             });
         }
-        onUpdated(() => {
-            if (isEditing.value)
-                document.getElementById(textInputId.value).focus();
-        });
         return {
             textInput,
             textInputId,
